@@ -128,9 +128,10 @@ class Config:
             slack_config.get("group_alerts_by"),
             GroupingType.BY_ALERT.value,
         )
-        self.group_all_alerts_threshold = self._first_not_none(
-            group_all_alerts_threshold,
-            slack_config.get("group_all_alerts_threshold"),
+        self.group_alerts_threshold = self._first_not_none(
+            group_alerts_threshold,
+            slack_config.get("group_alerts_threshold"),
+            100,
         )
 
         notification_config = config.get(self._NOTIFICATIONS, {})
