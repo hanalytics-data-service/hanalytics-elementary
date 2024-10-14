@@ -36,6 +36,8 @@ class Config:
 
     DEFAULT_TARGET_PATH = os.getcwd() + "/edr_target"
 
+    DEFAULT_GROUP_ALERTS_THRESHOLD = 100
+
     def __init__(
         self,
         config_dir: str = DEFAULT_CONFIG_DIR,
@@ -131,7 +133,7 @@ class Config:
         self.group_alerts_threshold = self._first_not_none(
             group_alerts_threshold,
             slack_config.get("group_alerts_threshold"),
-            100,
+            self.DEFAULT_GROUP_ALERTS_THRESHOLD,
         )
 
         notification_config = config.get(self._NOTIFICATIONS, {})
