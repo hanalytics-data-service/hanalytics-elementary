@@ -26,7 +26,7 @@ from elementary.messages.blocks import (
     LineBlock,
     LinesBlock,
     LinkBlock,
-    MentionBlock,
+    TableBlock,
     TextBlock,
     TextStyle,
 )
@@ -304,26 +304,15 @@ class AlertMessageBuilder:
                     ]
                 )
             )
-            if anomalous_value:
+            if isinstance(result_sample, list) and len(result_sample[0].keys()) < 4:
                 result_blocks.append(
-                    LinesBlock(
-                        lines=[
-                            LineBlock(
-                                inlines=[
-                                    TextBlock(
-                                        text="Anomalous Value:", style=TextStyle.BOLD
-                                    ),
-                                    TextBlock(text=str(anomalous_value)),
-                                ]
-                            ),
-                        ]
-                    )
+                    TableBlock.from_dicts(result_sample),
                 )
-            elif result_sample:
+            else:
                 result_blocks.append(
                     JsonCodeBlock(content=result_sample),
                 )
-        if result_query and AlertField.TEST_QUERY in fields:
+        if result_query:
             result_blocks.append(
                 LinesBlock(
                     lines=[

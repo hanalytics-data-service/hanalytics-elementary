@@ -2,6 +2,7 @@ from typing import Callable, List, Optional, Tuple
 
 from pydantic import BaseModel
 from slack_sdk.models import blocks as slack_blocks
+from tabulate import tabulate
 
 from elementary.messages.blocks import (
     CodeBlock,
@@ -17,7 +18,7 @@ from elementary.messages.blocks import (
     LineBlock,
     LinesBlock,
     LinkBlock,
-    MentionBlock,
+    TableBlock,
     TextBlock,
     TextStyle,
 )
@@ -42,6 +43,7 @@ ResolveMentionCallback = Callable[[str], Optional[str]]
 class BlockKitBuilder:
     _SECONDARY_FACT_CHUNK_SIZE = 2
     _LONGEST_MARKDOWN_SUFFIX_LEN = 3  # length of markdown's code suffix (```)
+    _MAX_CELL_LENGTH = 11
 
     def __init__(
         self, resolve_mention: Optional[ResolveMentionCallback] = None
@@ -86,6 +88,12 @@ class BlockKitBuilder:
         return block.sep.join(
             [self._format_inline_block(inline) for inline in block.inlines]
         )
+
+    def _formate_table_cell(self, cell_value: Any) -> str:
+        value = str(cell_value)
+        if len(value) > self._MAX_CELL_LENGTH:
+            return value[: self._MAX_CELL_LENGTH - 2] + ".."
+        return value
 
     def _format_markdown_section_text(self, text: str) -> dict:
         if len(text) > slack_blocks.SectionBlock.text_max_length:
@@ -181,6 +189,14 @@ class BlockKitBuilder:
         self._add_block({"type": "divider"})
         self._is_divided = True
 
+    def _add_table_block(self, block: TableBlock) -> None:
+        new_rows = [
+            [self._formate_table_cell(cell) for cell in row] for row in block.rows
+        ]
+        new_headers = [self._formate_table_cell(cell) for cell in block.headers]
+        table = tabulate(new_rows, headers=new_headers, tablefmt="simple")
+        self._add_block(self._format_markdown_section(f"```{table}```"))
+
     def _add_expandable_block(self, block: ExpandableBlock) -> None:
         """
         Expandable blocks are not supported in Slack Block Kit.
@@ -201,6 +217,8 @@ class BlockKitBuilder:
             self._add_divider_block(block)
         elif isinstance(block, ExpandableBlock):
             self._add_expandable_block(block)
+        elif isinstance(block, TableBlock):
+            self._add_table_block(block)
         else:
             raise ValueError(f"Unsupported message block type: {type(block)}")
 
