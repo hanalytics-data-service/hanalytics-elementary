@@ -299,15 +299,17 @@ class DataMonitoringAlerts(DataMonitoring):
             AlertsGroup,
         ],
     ):
-        alert_message_builder = AlertMessageBuilder()
-        alert_message_body = alert_message_builder.build(
-            alert=alert,
-        )
-        try:
-            self._send_message(
-                integration=self.alerts_integration,
-                body=alert_message_body,
-                metadata=alert.unified_meta,
+        # Support both legacy BaseIntegration and new BaseMessagingIntegration
+        # BaseIntegration will be deprecated in favor of BaseMessagingIntegration
+        if isinstance(self.alerts_integration, BaseIntegration):
+            return self.alerts_integration.send_alert(alert)
+        else:
+            # New messaging integration path - converts alerts to message bodies
+            alert_message_builder = AlertMessageBuilder()
+            fields = alert.alert_fields if not isinstance(alert, AlertsGroup) else None
+            alert_message_body = alert_message_builder.build(
+                alert=alert,
+                fields=fields,
             )
             return True
         except MessagingIntegrationError:
