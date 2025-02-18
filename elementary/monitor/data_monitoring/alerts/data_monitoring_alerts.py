@@ -306,10 +306,8 @@ class DataMonitoringAlerts(DataMonitoring):
         else:
             # New messaging integration path - converts alerts to message bodies
             alert_message_builder = AlertMessageBuilder()
-            fields = alert.alert_fields if not isinstance(alert, AlertsGroup) else None
             alert_message_body = alert_message_builder.build(
                 alert=alert,
-                fields=fields,
             )
             return True
         except MessagingIntegrationError:
